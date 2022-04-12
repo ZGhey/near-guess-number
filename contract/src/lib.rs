@@ -5,6 +5,7 @@ use near_sdk::{env, near_bindgen, AccountId, Promise};
 //use rand::Rng;
 use std::collections::HashMap;
 
+
 near_sdk::setup_alloc!();
 
 #[near_bindgen]
@@ -30,12 +31,18 @@ pub struct GuessRecord {
 
 #[near_bindgen]
 impl Contract {
+    
     #[payable]
     pub fn guess_number(&mut self, number: u32, maximum: u32) {
         let owner_id = env::predecessor_account_id();
         //let mut rng = rand::thread_rng();
         //let win_num = rng.gen_range(1..=maximum);
         let win_num = self.random_win_num(interval_minimum, maximum);
+        let win_num_sha256 = env::sha256(win_num.to_string().as_bytes());
+        let win_num_hex = hex::encode(&win_num_sha256);
+
+        let num_sha256 = env::sha256(number.to_string().as_bytes());
+        let num_hex = hex::encode(&num_sha256);
         // deposit amount
         let deposit = env::attached_deposit();
         // reward amount
@@ -47,7 +54,7 @@ impl Contract {
             reward
         );
         // win transfer reward
-        if number == win_num {
+        if num_hex == win_num_hex {
             Promise::new(owner_id.clone()).transfer(reward);
         }
 
